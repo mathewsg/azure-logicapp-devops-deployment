@@ -16,7 +16,7 @@ variables:
   azureServiceConnection: 'mat-devops-${{ parameters.environment }}'
   location: 'uksouth'
   resourceGroupName: 'rg-logicapp-${{ parameters.environment }}'
-  logicAppName: 'logicapp-commitfile-dev'
+  logicAppName: 'logicapp-matlogicapp-${{ parameters.environment }}'
 
 stages:
 - stage: 'infra_deploy'
@@ -27,7 +27,7 @@ stages:
     pool:
       vmImage: $(vmImageName)
     environment: 
-      name: 'dev'
+      name: ${{ parameters.environment }}
     strategy:
       runOnce:
         deploy:
@@ -41,22 +41,39 @@ stages:
               scriptType: bash
               scriptLocation: inlineScript
               inlineScript: |
-                az deployment group create --name logicappdeploy -g $(resourceGroupName) --template-file bicep/logicapp.bicep
+                az deployment group create --name logicappdeploy -g $(resourceGroupName) --template-file bicep/logicapp.bicep --parameters environment=${{ parameters.environment }}
 
-          # - task: ArchiveFiles@2
-          #   displayName: 'Create workflows ZIP'
-          #   inputs: 
-          #     rootFolderOrFile: '$(System.DefaultWorkingDirectory)/logic-app'
-          #     includeRootFolder: false
-          #     archiveType: 'zip'
-          #     archiveFile: '$(Build.ArtifactStagingDirectory)/logic-app/$(Build.BuildId).zip'
-          #     replaceExistingArchive: true
+- stage: 'logicapp_workflow_deploy'
+  displayName: 'Deploy Logic app Workflow to ${{ parameters.environment }} '
+  jobs:
+  - deployment: 'deploy_workflow'
+    displayName: 'Deploy ${{ parameters.environment }} workflow Job'
+    pool:
+      vmImage: $(vmImageName)
+    environment: 
+      name: ${{ parameters.environment }}
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - checkout: self
 
-          # - task: AzureFunctionApp@1
-          #   displayName: 'Deploy workflows to Function App'
-          #   inputs:
-          #     azureSubscription: $(azureServiceConnection)
-          #     appName: '$(logicAppName)'
-          #     appType: 'workflowapp'
-          #     package: '$(Build.ArtifactStagingDirectory)/logic-app/$(Build.BuildId).zip'
-          #     deploymentMethod: 'zipDeploy'                 
+          - task: ArchiveFiles@2
+            displayName: 'Create workflows ZIP'
+            inputs: 
+              rootFolderOrFile: '$(System.DefaultWorkingDirectory)'
+              includeRootFolder: false
+              archiveType: 'zip'
+              archiveFile: '$(Build.ArtifactStagingDirectory)/logic-app/$(Build.BuildId).zip'
+              replaceExistingArchive: true
+
+          - task: AzureFunctionApp@1
+            displayName: 'Deploy workflows to Function App'
+            inputs:
+              azureSubscription: $(azureServiceConnection)
+              appName: '$(logicAppName)'
+              appType: 'workflowapp'
+              package: '$(Build.ArtifactStagingDirectory)/logic-app/$(Build.BuildId).zip'
+              deploymentMethod: 'zipDeploy'     
+
+            

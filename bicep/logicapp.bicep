@@ -1,6 +1,6 @@
 targetScope= 'resourceGroup'
 
-param environment string = 'dev'  /// Use prod for production
+param environment string  /// Use prod for production
 param location string = resourceGroup().location
 param storageAccountSku string = 'Standard_LRS'
 
