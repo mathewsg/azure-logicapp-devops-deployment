@@ -27,7 +27,7 @@
                         "content": "@triggerBody()"
                     },
                     "serviceProviderConfiguration": {
-                        "connectionName": "AzureBlob",
+                        "connectionName": "AzureBlob-2",
                         "operationId": "uploadBlob",
                         "serviceProviderId": "/serviceProviders/AzureBlob"
                     }

@@ -2,7 +2,7 @@
   "serviceProviderConnections": {
     "AzureBlob": {
       "parameterValues": {
-        "connectionString": "@appsetting('AzureBlob_connectionString')"
+        "connectionString": "@appsetting('STORAGE_ACCOUNT_CONNECTION_STRING')"
       },
       "parameterSetName": "connectionString",
       "serviceProvider": {

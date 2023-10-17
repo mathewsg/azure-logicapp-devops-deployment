@@ -139,6 +139,11 @@ resource siteLogicApp 'Microsoft.Web/sites@2021-02-01' = {
           name: 'WORKFLOWS_RESOURCE_GROUP_NAME'
           value: resourceGroup().name
         }
+        {
+          name: 'STORAGE_ACCOUNT_CONNECTION_STRING'
+          value: 'DefaultEndpointsProtocol=https;AccountName=${logicAppStorage.name};AccountKey=${listKeys(logicAppStorage.id, '2019-06-01').keys[0].value};EndpointSuffix=core.windows.net'
+
+        }
       ]
       use32BitWorkerProcess: true
     }
