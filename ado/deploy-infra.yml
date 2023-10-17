@@ -1,0 +1,100 @@
+trigger:
+  None
+
+parameters:
+- name: environment
+  displayName: Deployment Environment
+  type: string
+  default: dev
+  values:
+  - dev
+  - test
+  - prod
+
+
+variables:
+  vmImageName: 'ubuntu-latest'
+  azureServiceConnection: 'russ-airs'
+  location: 'uksouth'
+  resourceGroupName: 'rg-devops-automate'
+  logicAppName: 'logicapp-commitfile-dev'
+
+stages:
+- stage: 'infra_deploy'
+  displayName: 'Deploy Infra to ${{ parameters.environment }} '
+  jobs:
+  - deployment: 'deploy_bicep'
+    displayName: 'Deploy ${{ parameters.environment }} Infra Job'
+    pool:
+      vmImage: $(vmImageName)
+    environment: 
+      name: 'dev'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - checkout: self
+
+          - task: AzureCLI@2
+            displayName: 'Azure CLI Create RG and deploy Key Vault'
+            inputs:
+              azureSubscription: $(azureServiceConnection)
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                ls -R
+                az --version
+                cd bicep
+                az group create --name $(resourceGroupName) --location $(location)
+                az deployment group create --name kvdeploy -g $(resourceGroupName) --template-file keyvault.bicep --parameters @keyvault.parameters.json
+
+          - task: AzureCLI@2
+            displayName: 'Azure CLI Deploy Function App'
+            inputs:
+              azureSubscription: $(azureServiceConnection)
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                cd bicep
+                az deployment group create --name fnappdeploy -g $(resourceGroupName) --template-file fnapp.bicep
+
+          - task: AzureCLI@2
+            displayName: 'Azure CLI Rename logic apps params files'
+            inputs:
+              azureSubscription: $(azureServiceConnection)
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                mv ./parameters.json ./parameters.local.json
+                mv ./parameters.portal.json ./parameters.json
+
+          - task: CopyFiles@2
+            displayName: 'Copy Logic App Files to logic-app'
+            inputs:
+              SourceFolder: '$(System.DefaultWorkingDirectory)'
+              Contents: |
+                host.json
+                connections.json
+                parameters.json
+                Artifacts/**/*
+                la-commitfile/**
+                la-commitfile-gh/**
+              TargetFolder: 'logic-app'
+
+          - task: ArchiveFiles@2
+            displayName: 'Create workflows ZIP'
+            inputs: 
+              rootFolderOrFile: '$(System.DefaultWorkingDirectory)/logic-app'
+              includeRootFolder: false
+              archiveType: 'zip'
+              archiveFile: '$(Build.ArtifactStagingDirectory)/logic-app/$(Build.BuildId).zip'
+              replaceExistingArchive: true
+
+          - task: AzureFunctionApp@1
+            displayName: 'Deploy workflows to Function App'
+            inputs:
+              azureSubscription: $(azureServiceConnection)
+              appName: '$(logicAppName)'
+              appType: 'workflowapp'
+              package: '$(Build.ArtifactStagingDirectory)/logic-app/$(Build.BuildId).zip'
+              deploymentMethod: 'zipDeploy'                 
