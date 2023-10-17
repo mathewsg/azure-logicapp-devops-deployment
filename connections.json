@@ -8,7 +8,7 @@
       "serviceProvider": {
         "id": "/serviceProviders/AzureBlob"
       },
-      "displayName": "ukslogicapp_connection"
+      "displayName": "azstorage_connection"
     }
   },
   "managedApiConnections": {}
