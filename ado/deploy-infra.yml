@@ -41,7 +41,6 @@ stages:
               scriptType: bash
               scriptLocation: inlineScript
               inlineScript: |
-                cd bicep
                 az deployment group create --name logicappdeploy -g $(resourceGroupName) --template-file bicep\logicapp.bicep
 
           # - task: ArchiveFiles@2
