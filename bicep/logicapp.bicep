@@ -13,7 +13,7 @@ var maximumElasticSize = 3
 
 
 resource logicAppStorage 'Microsoft.Storage/storageAccounts@2019-06-01' = {
-  name: 'st5logicapp${name}${environment}'
+  name: 'uks${name}${environment}'
   location: location
   kind: 'StorageV2'
   sku: {
