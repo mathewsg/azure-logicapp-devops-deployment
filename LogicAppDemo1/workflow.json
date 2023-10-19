@@ -85,7 +85,13 @@
                 }
             }
         },
-        "parameters": {}
+        "parameters": {
+            "environment": {
+                "type": "String",
+                "value": "dev",
+                "defaultValue": "dev"
+            }
+        }
     },
-    "kind": "Stateful"
+    "kind": "Stateless"
 }

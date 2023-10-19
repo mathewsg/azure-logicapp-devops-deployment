@@ -10,5 +10,6 @@
       },
       "displayName": "azstorage_connection"
     }
-  }
+  },
+  "managedApiConnections": {}
 }
